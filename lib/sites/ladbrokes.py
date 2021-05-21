@@ -25,10 +25,10 @@ def initialise_webdriver():
     if platform.system() == 'Windows':
         path = 'chromedriver/chromedriver.exe'
     elif platform.system() == 'Darwin':
-        os.chmod('chromedriver/chromedriver_mac', 0755)
+        os.chmod('chromedriver/chromedriver_mac', 755)
         path = 'chromedriver/chromedriver_mac'
     else:
-        os.chmod('chromedriver/chromedriver_linux', 0755)
+        os.chmod('chromedriver/chromedriver_linux', 755)
         path = 'chromedriver/chromedriver_linux'
 
     # Initialise and return webdriver
