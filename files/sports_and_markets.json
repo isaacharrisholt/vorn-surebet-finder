@@ -1,0 +1,16 @@
+{
+  "Football": {
+    "two-way": [
+      "btts", "over-under-2.5"
+    ],
+    "three-way": [
+      "1x2", "halftime-1x2"
+    ],
+    "win-bet-is-three-way": true
+  },
+  "Tennis": {
+    "two-way": [],
+    "three-way": [],
+    "win-bet-is-three-way": false
+  }
+}

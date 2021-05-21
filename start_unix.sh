@@ -1,0 +1,1 @@
+python3 vorn_surebet_finder.py || python vorn_surebet_finder.py

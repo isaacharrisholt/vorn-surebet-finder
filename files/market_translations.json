@@ -1,0 +1,20 @@
+{
+  "Betfair": {
+    "1x2": "Match Odds",
+    "btts": "Both teams to Score?",
+    "halftime-1x2": "Half Time",
+    "over-under-2.5": "Over/Under 2.5 Goals"
+  },
+  "bwin": {
+    "1x2": "Result 1X2",
+    "btts": "Both teams to score?",
+    "halftime-1x2": "Halftime 1X2",
+    "over-under-2.5": "Over/Under"
+  },
+  "Ladbrokes": {
+    "1x2": "Match Result",
+    "btts": "Both Teams to Score",
+    "halftime-1x2": "1st Half Result",
+    "over-under-2.5": "Total Goals Over/Under 2.5"
+  }
+}
