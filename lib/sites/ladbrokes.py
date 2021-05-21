@@ -202,7 +202,12 @@ def get_data(queue, sport, markets=None):
         return
 
     # Get all the odds
-    odds_dict = get_all_odds(driver, markets)
+    try:
+        odds_dict = get_all_odds(driver, markets)
+    except TimeoutError:
+        print(f'- Ladbrokes: Timed out, returning.')
+        queue.put({})
+        return
 
     # Finished with the driver. It can sleep now
     driver.quit()

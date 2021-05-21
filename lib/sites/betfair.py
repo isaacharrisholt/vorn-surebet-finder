@@ -94,7 +94,7 @@ def get_market_odds(driver, market, odds_dict):
     box = driver.find_element_by_xpath('//div[contains(@class, "sport-container") and contains(@class, "visible")]')
 
     # Get single row events
-    rows = WebDriverWait(box, 5).until(ec.visibility_of_all_elements_located((By.CLASS_NAME, 'com-coupon-line')))
+    rows = WebDriverWait(box, 10).until(ec.visibility_of_all_elements_located((By.CLASS_NAME, 'com-coupon-line')))
 
     # Iterate through rows and find odds and competitor names
     for row in rows:
@@ -182,7 +182,12 @@ def get_data(queue, sport, markets=None):
         return
 
     # Get all the odds
-    odds_dict = get_all_odds(driver, markets)
+    try:
+        odds_dict = get_all_odds(driver, markets)
+    except TimeoutError:
+        print(f'- Betfair: Timed out, returning.')
+        queue.put({})
+        return
 
     # Finished with the driver. It can sleep now
     driver.quit()
