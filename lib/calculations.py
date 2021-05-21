@@ -31,8 +31,8 @@ def two_way_rounded_calculations(odds1, odds2, stake1, stake2, total_stake, roun
         stake2 = total_stake - stake1
 
     # Calculate profits and percentage benefits
-    profit1 = odds1 * stake1 - total_stake
-    profit2 = odds2 * stake2 - total_stake
+    profit1 = odds1 * stake1 - stake2
+    profit2 = odds2 * stake2 - stake1
     benefit1 = f'{profit1 / total_stake * 100:.2f}%'
     benefit2 = f'{profit2 / total_stake * 100:.2f}%'
 
@@ -81,9 +81,9 @@ def three_way_rounded_calculations(odds1, odds2, odds3, stake1, stake2, stake3, 
         stake3 = total_stake - (stake1 + stake2)
 
     # Calculate profits and percentage benefits
-    profit1 = odds1 * stake1 - total_stake
-    profit2 = odds2 * stake2 - total_stake
-    profit3 = odds3 * stake3 - total_stake
+    profit1 = odds1 * stake1 - (stake2 + stake3)
+    profit2 = odds2 * stake2 - (stake1 + stake3)
+    profit3 = odds3 * stake3 - (stake1 + stake2)
     benefit1 = f'{profit1 / total_stake * 100:.2f}%'
     benefit2 = f'{profit2 / total_stake * 100:.2f}%'
     benefit3 = f'{profit3 / total_stake * 100:.2f}%'
