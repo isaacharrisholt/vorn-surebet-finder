@@ -1,5 +1,6 @@
 import time
 import platform
+import os
 
 import pandas as pd
 from selenium import webdriver
@@ -24,8 +25,10 @@ def initialise_webdriver():
     if platform.system() == 'Windows':
         path = 'chromedriver/chromedriver.exe'
     elif platform.system() == 'Darwin':
+        os.chmod('chromedriver/chromedriver_mac', 0755)
         path = 'chromedriver/chromedriver_mac'
     else:
+        os.chmod('chromedriver/chromedriver_linux', 0755)
         path = 'chromedriver/chromedriver_linux'
 
     # Initialise and return webdriver
@@ -128,7 +131,15 @@ def get_market_odds(driver, market, odds_dict):
 
         # We only want the first dropdown, so use odds[0]
         odd = odds[0]
-        odds_list.append(odd.text)
+
+        # If looking at Over/Under 2.5 goals, we only want odds where we have 2.5 goals
+        if 'Over/Under' in market:
+            if '2,5' not in odd.text:
+                continue
+            else:
+                odds_list.append(odd.text.replace('2,5', ''))
+        else:
+            odds_list.append(odd.text)
 
         # Get competitor names
         competitor_name_fields = row.find_elements_by_class_name('participant')
