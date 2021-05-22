@@ -1,7 +1,7 @@
 {
   "Football": {
     "two-way": [
-      "btts", "over-under-2.5"
+      "btts", "over-under-1.5", "over-under-2.5", "over-under-3.5", "over-under-4.5"
     ],
     "three-way": [
       "1x2", "halftime-1x2"

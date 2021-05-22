@@ -2,6 +2,7 @@ import pandas as pd
 from fuzzywuzzy import process, fuzz
 
 from . import utils
+from .two_way import MIN_MATCHING_SCORE
 
 
 # Clean up the dataframes and just get the markets we want
@@ -45,7 +46,8 @@ def get_surebet_df(df1, df2, df3, market):
     surebet_df = surebet_df.rename(columns=rename)
 
     # Filter out where matching scores are low
-    surebet_df = surebet_df[(surebet_df['Matching Score 1'] > 60) & (surebet_df['Matching Score 2'] > 60)]
+    surebet_df = surebet_df[(surebet_df['Matching Score 1'] > MIN_MATCHING_SCORE) &
+                            (surebet_df['Matching Score 2'] > MIN_MATCHING_SCORE)]
 
     # Only keep columns we need
     surebet_df = surebet_df[['Competitors_x', f'{market}_x',

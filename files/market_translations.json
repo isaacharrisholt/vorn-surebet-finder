@@ -3,18 +3,27 @@
     "1x2": "Match Odds",
     "btts": "Both teams to Score?",
     "halftime-1x2": "Half Time",
-    "over-under-2.5": "Over/Under 2.5 Goals"
+    "over-under-1.5": "Over/Under 1.5 Goals",
+    "over-under-2.5": "Over/Under 2.5 Goals",
+    "over-under-3.5": "Over/Under 3.5 Goals",
+    "over-under-4.5": "Over/Under 4.5 Goals"
   },
   "bwin": {
     "1x2": "Result 1X2",
     "btts": "Both teams to score?",
     "halftime-1x2": "Halftime 1X2",
-    "over-under-2.5": "Over/Under"
+    "over-under-1.5": "Over/Under 1,5",
+    "over-under-2.5": "Over/Under 2,5",
+    "over-under-3.5": "Over/Under 3,5",
+    "over-under-4.5": "Over/Under 4,5"
   },
   "Ladbrokes": {
     "1x2": "Match Result",
     "btts": "Both Teams to Score",
     "halftime-1x2": "1st Half Result",
-    "over-under-2.5": "Total Goals Over/Under 2.5"
+    "over-under-1.5": "Total Goals Over/Under 1.5",
+    "over-under-2.5": "Total Goals Over/Under 2.5",
+    "over-under-3.5": "Total Goals Over/Under 3.5",
+    "over-under-4.5": "Total Goals Over/Under 4.5"
   }
 }

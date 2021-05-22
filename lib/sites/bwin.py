@@ -25,9 +25,11 @@ def initialise_webdriver():
     if platform.system() == 'Windows':
         path = 'chromedriver/chromedriver.exe'
     elif platform.system() == 'Darwin':
+        options.add_argument('--no-sandbox')
         os.chmod('chromedriver/chromedriver_mac', 755)
         path = 'chromedriver/chromedriver_mac'
     else:
+        options.add_argument('--no-sandbox')
         os.chmod('chromedriver/chromedriver_linux', 755)
         path = 'chromedriver/chromedriver_linux'
 
@@ -132,12 +134,14 @@ def get_market_odds(driver, market, odds_dict):
         # We only want the first dropdown, so use odds[0]
         odd = odds[0]
 
-        # If looking at Over/Under 2.5 goals, we only want odds where we have 2.5 goals
+        # If looking at Over/Under X goals, we only want odds where we have X goals
         if 'Over/Under' in market:
-            if '2,5' not in odd.text:
+            goals = market.split(' ')[1]
+
+            if goals not in odd.text:
                 continue
             else:
-                odds_list.append(odd.text.replace('2,5', ''))
+                odds_list.append(odd.text.replace(goals, '').strip('\n'))
         else:
             odds_list.append(odd.text)
 
@@ -162,7 +166,13 @@ def get_all_odds(driver, markets):
     if len(markets) > 1:
         print('-- bwin: Getting multi-market odds')
         for market in markets:
-            if not change_market(driver, market):
+            # bwin doesn't have separate markets for Over/Under X Goals, so deal with it this way
+            if 'Over/Under' in market:
+                market_to_change = 'Over/Under'
+            else:
+                market_to_change = market
+
+            if not change_market(driver, market_to_change):
                 print(f'-- bwin: "{market}" market not available')
                 continue
             odds_dict = get_market_odds(driver, market, odds_dict)

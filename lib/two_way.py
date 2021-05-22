@@ -4,6 +4,8 @@ from sympy import symbols, solve, Eq
 
 from . import utils
 
+MIN_MATCHING_SCORE = 70
+
 
 # Clean up the dataframes and just get the markets we want
 def format_df(df, market):
@@ -32,7 +34,7 @@ def match_competitors(df1, df2):
 def get_surebet_df(df1, df2, market):
     # Merge, eliminate non-matching competitors and select only the columns we need
     surebet_df = pd.merge(df1, df2, left_on='Matched Competitors', right_on='Competitors')
-    surebet_df = surebet_df[surebet_df['Matching Score'] > 60]
+    surebet_df = surebet_df[surebet_df['Matching Score'] > MIN_MATCHING_SCORE]
     surebet_df = surebet_df[['Competitors_x', f'{market}_x', 'Competitors_y', f'{market}_y']]
     return surebet_df
 
