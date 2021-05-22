@@ -4,3 +4,4 @@ apt-get install chromium-chromedriver || sudo apt-get chromium-chromedriver || b
 cd files || exit
 xattr -d com.apple.quarantine chromedriver_mac || echo
 spctl --add --label 'Approved' chromedriver_mac || echo
+read -p "Press Enter to continue then send me a screenshot of the terminal pleaseeeee"
