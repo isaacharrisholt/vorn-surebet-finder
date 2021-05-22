@@ -31,6 +31,13 @@ You can install the prerequisites double-clicking `install_prerequesites.bat` af
 
 ### Mac and Linux installation
 
+First, install Homebrew, which is a very useful package manager for MacOS and Linux. I recommend having this regardless
+of whether or not it's to use this program. You can install it with the following command:
+
+```commandline
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
 Run `install_prerequisites.sh` from the terminal to install the prerequisites. This will also install required libraries
 for Chromedriver, so don't skip this step!
 
