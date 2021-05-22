@@ -122,9 +122,12 @@ def get_market_odds(driver, market, odds_dict):
 
     # Iterate through rows and find odds and competitor names
     for row in rows:
-        odds = row.find_element_by_class_name('sport-card-btn-content')
+        try:
+            odds = row.find_element_by_class_name('sport-card-btn-content')
+            competitor_names = row.find_element_by_class_name('sport-card-names').text
+        except StaleElementReferenceException:
+            continue
         odds_list.append(odds.text)
-        competitor_names = row.find_element_by_class_name('sport-card-names').text
         competitors.append(competitor_names.replace('\n', ' - '))
 
     # Store data in odds dictionary and return
