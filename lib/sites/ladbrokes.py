@@ -125,10 +125,10 @@ def get_market_odds(driver, market, odds_dict):
         try:
             odds = row.find_element_by_class_name('sport-card-btn-content')
             competitor_names = row.find_element_by_class_name('sport-card-names').text
+            odds_list.append(odds.text)
+            competitors.append(competitor_names.replace('\n', ' - '))
         except StaleElementReferenceException:
             continue
-        odds_list.append(odds.text)
-        competitors.append(competitor_names.replace('\n', ' - '))
 
     # Store data in odds dictionary and return
     odds_dict[market] = {}
