@@ -4,7 +4,7 @@ import os
 
 import pandas as pd
 from selenium import webdriver
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, StaleElementReferenceException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
@@ -95,7 +95,12 @@ def change_market(driver, market):
             time.sleep(1)
 
             # Expand listings
-            expand_listings(driver)
+            while True:
+                try:
+                    expand_listings(driver)
+                    break
+                except StaleElementReferenceException:
+                    pass
 
             return True
 
