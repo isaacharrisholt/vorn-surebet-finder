@@ -131,7 +131,6 @@ def get_market_odds(driver, market, odds_dict):
         competitors.append(competitor_names.replace('\n', ' - '))
 
     # Store data in odds dictionary and return
-    # Store data in odds dictionary and return
     odds_dict[market] = {}
     odds_dict[market]['Odds'] = odds_list
     odds_dict[market]['Competitors'] = competitors
