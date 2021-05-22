@@ -26,11 +26,9 @@ def initialise_webdriver():
     if platform.system() == 'Windows':
         path = 'chromedriver/chromedriver.exe'
     elif platform.system() == 'Darwin':
-        options.add_argument('--no-sandbox')
         path = 'chromedriver/chromedriver_mac'
         os.chmod(path, 755)
     else:
-        options.add_argument('--no-sandbox')
         path = 'chromedriver/chromedriver_linux'
         os.chmod(path, 755)
 
