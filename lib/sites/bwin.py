@@ -1,10 +1,11 @@
 import time
 import platform
 import os
+from .. import utils
 
 import pandas as pd
 from selenium import webdriver
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, SessionNotCreatedException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
@@ -34,7 +35,12 @@ def initialise_webdriver():
         os.chmod(path, 755)
 
     # Initialise and return webdriver
-    driver = webdriver.Chrome(path, options=options)
+    try:
+        driver = webdriver.Chrome(path, options=options)
+    except SessionNotCreatedException:
+        utils.pinput('Please update your version of Google Chrome. If it\'s up to date and still not working, please '
+                     'message me on GitHub.\nPress Enter to quit.')
+        utils.quit_program()
     return driver
 
 
