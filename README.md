@@ -31,7 +31,8 @@ You can install the prerequisites double-clicking `install_prerequesites.bat` af
 
 ### Mac and Linux installation
 
-Run `install_prerequisites.sh` from the terminal to install the prerequisites.
+Run `install_prerequisites.sh` from the terminal to install the prerequisites. This will also install required libraries
+for Chromedriver, so don't skip this step!
 
 ## Program Installation
 
