@@ -41,6 +41,16 @@ of whether or not it's to use this program. You can install it with the followin
 Run `install_prerequisites.sh` from the terminal to install the prerequisites. This will also install required libraries
 for Chromedriver, so don't skip this step!
 
+### Updating Chromedriver
+
+I will try my best to keep the included Chromedriver up to date with the latest stable version of Chrome, but sometimes 
+I may miss an update by a few days. If you wish to update it yourself, please download the relevant version of
+Chromedriver from [here](https://chromedriver.chromium.org/downloads) and replace the correct file in the `chromedriver`
+directory.
+
+For Windows, this is `chromedriver.exe`, and for MacOS and Linux it's `chromedriver_mac` and `chromedriver_linux`
+respectively.
+
 ## Program Installation
 
 Vorn Surebet Finder can either be installed by downloading the repository from
