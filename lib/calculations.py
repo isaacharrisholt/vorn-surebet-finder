@@ -2,6 +2,9 @@ from sympy import symbols, solve, Eq
 
 from . import utils
 
+# Minimum profit % for bet to count as safe
+MIN_PROFIT_PERCENT = 7 / 100
+
 
 # Unrounded calculations for two way bets
 def two_way_unrounded_calculations(odds1, odds2, total_stake):
@@ -31,8 +34,8 @@ def two_way_rounded_calculations(odds1, odds2, stake1, stake2, total_stake, roun
         stake2 = total_stake - stake1
 
     # Calculate profits and percentage benefits
-    profit1 = odds1 * stake1 - stake2
-    profit2 = odds2 * stake2 - stake1
+    profit1 = odds1 * stake1 - total_stake
+    profit2 = odds2 * stake2 - total_stake
     benefit1 = f'{profit1 / total_stake * 100:.2f}%'
     benefit2 = f'{profit2 / total_stake * 100:.2f}%'
 
@@ -81,9 +84,9 @@ def three_way_rounded_calculations(odds1, odds2, odds3, stake1, stake2, stake3, 
         stake3 = total_stake - (stake1 + stake2)
 
     # Calculate profits and percentage benefits
-    profit1 = odds1 * stake1 - (stake2 + stake3)
-    profit2 = odds2 * stake2 - (stake1 + stake3)
-    profit3 = odds3 * stake3 - (stake1 + stake2)
+    profit1 = odds1 * stake1 - total_stake
+    profit2 = odds2 * stake2 - total_stake
+    profit3 = odds3 * stake3 - total_stake
     benefit1 = f'{profit1 / total_stake * 100:.2f}%'
     benefit2 = f'{profit2 / total_stake * 100:.2f}%'
     benefit3 = f'{profit3 / total_stake * 100:.2f}%'
@@ -116,9 +119,17 @@ def two_way_bets(surebets_df, bet_dicts, broker_pair, market, total_stake, round
             if not value < 1:
                 continue
 
+            # If in second column, swap broker names to make bets easier to find
+            if col == 2:
+                broker_pair = '-'.join([broker_pair.split('-')[1], broker_pair.split('-')[0]])
+
             # Get odds values
-            odds1 = float([utils.convert_odds(odd) for odd in surebets_df.at[i, f'{market}_x'].split('\n')][0])
-            odds2 = float([utils.convert_odds(odd) for odd in surebets_df.at[i, f'{market}_y'].split('\n')][1])
+            try:
+                odds1 = float([utils.convert_odds(odd) for odd in surebets_df.at[i, f'{market}_x'].split('\n')][0])
+                odds2 = float([utils.convert_odds(odd) for odd in surebets_df.at[i, f'{market}_y'].split('\n')][1])
+            except KeyError:
+                continue
+
             competitors = surebets_df.iloc[i, surebets_df.columns.get_loc('Competitors_x')]
 
             # Calculate the stakes required and the profit and benefit from the bet
@@ -127,13 +138,18 @@ def two_way_bets(surebets_df, bet_dicts, broker_pair, market, total_stake, round
             # Calculate the same values for the stakes when rounded to the nearest rounding_base
             bet_dict = two_way_rounded_calculations(odds1, odds2, stake1, stake2, total_stake, rounding_base)
 
-            # If rounded values don't result in a profit, bet is unsafe
-            if not (bet_dict['Profit 1'] > 0 and bet_dict['Profit 2'] > 0):
+            # If rounded values don't result in a profit of at least 5%, consider bet unsafe
+            if not (bet_dict['Profit 1'] > MIN_PROFIT_PERCENT * total_stake and
+                    bet_dict['Profit 2'] > MIN_PROFIT_PERCENT * total_stake):
                 print('Found unsafe bet, discarding')
                 continue
 
             # Save to bet_dicts with competitors as key
-            bet_dicts[market][broker_pair][competitors] = bet_dict
+            try:
+                bet_dicts[market][broker_pair][competitors] = bet_dict
+            except KeyError:
+                bet_dicts[market][broker_pair] = {}
+                bet_dicts[market][broker_pair][competitors] = bet_dict
 
     return bet_dicts
 
@@ -148,10 +164,30 @@ def three_way_bets(surebets_df, bet_dicts, broker_pair, market, total_stake, rou
             if not value < 1:
                 continue
 
+            # Reorganise brokers to make it easier to find bets
+            brokers = broker_pair.split('-')
+
+            if col == 1:
+                broker_combo = '-'.join([brokers[0], brokers[1], brokers[2]])
+            elif col == 2:
+                broker_combo = '-'.join([brokers[0], brokers[2], brokers[1]])
+            elif col == 3:
+                broker_combo = '-'.join([brokers[1], brokers[0], brokers[2]])
+            elif col == 4:
+                broker_combo = '-'.join([brokers[1], brokers[2], brokers[0]])
+            elif col == 5:
+                broker_combo = '-'.join([brokers[2], brokers[0], brokers[1]])
+            else:
+                broker_combo = '-'.join([brokers[2], brokers[1], brokers[0]])
+
             # Get odds values
-            odds1 = float([utils.convert_odds(odd) for odd in surebets_df.at[i, f'{market}_x'].split('\n')][0])
-            odds2 = float([utils.convert_odds(odd) for odd in surebets_df.at[i, f'{market}_y'].split('\n')][1])
-            odds3 = float([utils.convert_odds(odd) for odd in surebets_df.at[i, f'{market}_y'].split('\n')][2])
+            try:
+                odds1 = float([utils.convert_odds(odd) for odd in surebets_df.at[i, f'{market}_x'].split('\n')][0])
+                odds2 = float([utils.convert_odds(odd) for odd in surebets_df.at[i, f'{market}_y'].split('\n')][1])
+                odds3 = float([utils.convert_odds(odd) for odd in surebets_df.at[i, f'{market}_y'].split('\n')][2])
+            except KeyError:
+                continue
+
             competitors = surebets_df.iloc[i, surebets_df.columns.get_loc('Competitors_x')]
 
             # Calculate the stakes required and the profit and benefit from the bet
@@ -161,13 +197,19 @@ def three_way_bets(surebets_df, bet_dicts, broker_pair, market, total_stake, rou
             bet_dict = three_way_rounded_calculations(odds1, odds2, odds3, stake1, stake2, stake3, total_stake,
                                                       rounding_base)
 
-            # If rounded values don't result in a profit, bet is unsafe
-            if not (bet_dict['Profit 1'] > 0 and bet_dict['Profit 2'] > 0 and bet_dict['Profit 3'] > 0):
+            # If rounded values don't result in a profit greater than 5%, consider bet unsafe
+            if not (bet_dict['Profit 1'] > MIN_PROFIT_PERCENT * total_stake and
+                    bet_dict['Profit 2'] > MIN_PROFIT_PERCENT * total_stake and
+                    bet_dict['Profit 3'] > MIN_PROFIT_PERCENT * total_stake):
                 print('Found unsafe bet, discarding')
                 continue
 
             # Save to bet_dicts with competitors as key
-            bet_dicts[market][broker_pair][competitors] = bet_dict
+            try:
+                bet_dicts[market][broker_combo][competitors] = bet_dict
+            except KeyError:
+                bet_dicts[market][broker_combo] = {}
+                bet_dicts[market][broker_combo][competitors] = bet_dict
 
     return bet_dicts
 

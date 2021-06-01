@@ -1,11 +1,12 @@
 import time
 import platform
 import os
+
 from .. import utils
 
 import pandas as pd
 from selenium import webdriver
-from selenium.common.exceptions import TimeoutException, SessionNotCreatedException
+from selenium.common.exceptions import TimeoutException, SessionNotCreatedException, StaleElementReferenceException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
@@ -19,7 +20,7 @@ def initialise_webdriver():
     # Initialise webdriver options
     options = Options()
     options.headless = True
-    options.add_argument('window-size=1920x1080')
+    options.add_argument('window-size=1920,1080')
     options.add_experimental_option('excludeSwitches', ['enable-logging'])
 
     # Path to Chromedriver
@@ -47,13 +48,16 @@ def prevent_popup(driver):
     # Find promo banner
     promo_banner = WebDriverWait(driver, 5).until(ec.presence_of_element_located((By.CLASS_NAME,
                                                                                   'header-top-promo-banner')))
-    close_button = promo_banner.find_element_by_class_name('theme-close-i')
-    close_button.click()
+    try:
+        close_button = WebDriverWait(driver, 5).until(ec.element_to_be_clickable((By.CLASS_NAME, 'theme-close-i')))
+        close_button.click()
+    except (StaleElementReferenceException, TimeoutException):
+        print('-- bwin: Couldn\'t find promo banner close button.')
 
 
 # Accepts cookies on site
 def accept_cookies(driver):
-    accept = WebDriverWait(driver, 15).until(ec.element_to_be_clickable((By.XPATH,
+    accept = WebDriverWait(driver, 5).until(ec.element_to_be_clickable((By.XPATH,
                                                                          '//*[@id="onetrust-accept-btn-handler"]')))
     accept.click()
 
@@ -95,16 +99,18 @@ def change_market(driver, market):
     # Get dropdown and click it
     dropdowns = WebDriverWait(driver, 5).until(ec.presence_of_all_elements_located((By.TAG_NAME, 'ms-group-selector')))
     dropdown = WebDriverWait(dropdowns[0], 10).until(ec.element_to_be_clickable((By.XPATH, './/ms-dropdown')))
-    dropdown.click()
+    driver.execute_script('arguments[0].click()', dropdown)
 
     # Find dropdown menu and get the options
     selector = driver.find_element_by_class_name('select')
     options = selector.find_elements_by_class_name('option')
 
     for option in options:
-        if option.text.strip() == market:
-            option.click()
+        option_text = option.get_attribute('innerHTML').replace('<!---->', '').strip()
+        if option_text == market:
+            driver.execute_script('arguments[0].click()', option)
             return True
+
     return False
 
 
@@ -122,37 +128,40 @@ def get_market_odds(driver, market, odds_dict):
 
     # Iterate rows and find odds and competitor names
     for row in rows:
-        odds = row.find_elements_by_class_name('grid-option-group')
-
-        # Remove empty odds
         try:
-            empty_events = row.find_elements_by_class_name('empty')
-            odds = [odd for odd in odds if odd not in empty_events]
-        except Exception:
-            pass
+            odds = row.find_elements_by_class_name('grid-option-group')
 
-        # Return if odds is empty
-        if not odds:
-            continue
+            # Remove empty odds
+            try:
+                empty_events = row.find_elements_by_class_name('empty')
+                odds = [odd for odd in odds if odd not in empty_events]
+            except Exception:
+                pass
 
-        # We only want the first dropdown, so use odds[0]
-        odd = odds[0]
-
-        # If looking at Over/Under X goals, we only want odds where we have X goals
-        if 'Over/Under' in market:
-            goals = market.split(' ')[1]
-
-            if goals not in odd.text:
+            # Return if odds is empty
+            if not odds:
                 continue
-            else:
-                odds_list.append(odd.text.replace(goals, '').strip('\n'))
-        else:
-            odds_list.append(odd.text)
 
-        # Get competitor names
-        competitor_name_fields = row.find_elements_by_class_name('participant')
-        competitor_names = [competitor_name.text for competitor_name in competitor_name_fields]
-        competitors.append(' - '.join(competitor_names))
+            # We only want the first dropdown, so use odds[0]
+            odd = odds[0]
+
+            # If looking at Over/Under X goals, we only want odds where we have X goals
+            if 'Over/Under' in market:
+                goals = market.split(' ')[1]
+
+                if goals not in odd.text:
+                    continue
+                else:
+                    odds_list.append(odd.text.replace(goals, '').strip('\n'))
+            else:
+                odds_list.append(odd.text)
+
+            # Get competitor names
+            competitor_name_fields = row.find_elements_by_class_name('participant')
+            competitor_names = [competitor_name.text for competitor_name in competitor_name_fields]
+            competitors.append(' - '.join(competitor_names))
+        except StaleElementReferenceException:
+            continue
 
     # Store data in odds dictionary and return
     odds_dict[market] = {}
@@ -178,6 +187,9 @@ def get_all_odds(driver, markets):
 
             if not change_market(driver, market_to_change):
                 print(f'-- bwin: "{market}" market not available')
+                odds_dict[market] = {}
+                odds_dict[market]['Odds'] = []
+                odds_dict[market]['Competitors'] = []
                 continue
             odds_dict = get_market_odds(driver, market, odds_dict)
     elif not markets:
@@ -245,7 +257,7 @@ def get_data(queue, sport, markets=None):
     # Get all the odds
     try:
         odds_dict = get_all_odds(driver, markets)
-    except TimeoutError:
+    except TimeoutException:
         print(f'- bwin: Timed out, returning.')
         queue.put({})
         return

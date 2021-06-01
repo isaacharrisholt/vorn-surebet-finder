@@ -66,11 +66,16 @@ def find_surebets(surebet_df, market):
     for letter in letters:
         surebet_df[[f'{market}_{letter}_1',
                     f'{market}_{letter}_2',
-                    f'{market}_{letter}_3']] = surebet_df[f'{market}_{letter}'].apply(utils.replace_comma) \
-                                                           .str.split('\n', expand=True).iloc[:, 0:3].apply(pd.Series)
+                    f'{market}_{letter}_3']] = surebet_df[f'{market}_{letter}'].apply(lambda x: utils.check_length(x,
+                                                                                                                   3)) \
+                                                                               .str.split('\n', expand=True) \
+                                                                               .apply(pd.Series)
+        # Drop rows with None due to odds with only one value
+        # surebet_df = surebet_df.dropna()
+
+        # Clean dataframe
         for i in [1, 2, 3]:
-            surebet_df[f'{market}_{letter}_{i}'] = surebet_df[f'{market}_{letter}_{i}'].apply(utils.convert_odds) \
-                                                                                       .astype(float)
+            surebet_df[f'{market}_{letter}_{i}'] = surebet_df[f'{market}_{letter}_{i}'].apply(utils.convert_odds)
 
     # Add reciprocals of odds combinations
     count = 0
@@ -98,7 +103,7 @@ def find_surebets(surebet_df, market):
 
     # Clean up the frame
     surebet_columns = [f'{market}_surebets_{i + 1}' for i in range(count)]
-    surebet_columns = ['Competitors_x', f'{market}_x', 'Competitors_y', f'{market}_y', 'Competitors_z', f'{market}_z']\
+    surebet_columns = ['Competitors_x', f'{market}_x', 'Competitors_y', f'{market}_y', 'Competitors_z', f'{market}_z'] \
                       + surebet_columns
     surebet_df = surebet_df[surebet_columns]
 
@@ -142,45 +147,43 @@ def get_surebets(odds_dfs, market):
 
         for broker2 in copied_dfs:
             df2 = copied_dfs[broker2].copy()
-
-            # Check if this is the same as first broker, if so continue
-            if broker2 == broker1:
-                continue
-
             for broker3 in copied_dfs:
-                df3 = copied_dfs[broker3].copy()
+                try:
+                    df3 = copied_dfs[broker3].copy()
 
-                # If both brokers are the same, skip
-                if broker3 == broker2 or broker3 == broker1:
+                    # If all brokers are the same, skip
+                    if broker3 == broker2 and broker3 == broker1:
+                        continue
+
+                    sorted_brokers = sorted([broker1, broker2, broker3])
+
+                    # If we've already checked this dataframe combo, skip
+                    if sorted_brokers in checked_combos:
+                        continue
+
+                    # Make sure we don't check this combo again
+                    checked_combos.append(sorted_brokers)
+
+                    # Store name of dataframe combo for reference
+                    combo_name = '-'.join([broker1, broker2, broker3])
+
+                    # Match strings in out dataframes
+                    df1 = match_competitors(df1, df2, df3)
+
+                    # Create a combined surebet dataframe
+                    surebet_df = get_surebet_df(df1, df2, df3, market)
+
+                    # Drop rows with NaN due to missing data
+                    surebet_df = surebet_df.dropna()
+
+                    # Find surebets
+                    surebet_df = find_surebets(surebet_df, market)
+
+                    # Save result
+                    if not surebet_df.empty:
+                        surebets_dict[combo_name] = surebet_df
+                except ValueError:
                     continue
-
-                sorted_brokers = sorted([broker1, broker2, broker3])
-
-                # If we've already checked this dataframe combo, skip
-                if sorted_brokers in checked_combos:
-                    continue
-
-                # Make sure we don't check this combo again
-                checked_combos.append(sorted_brokers)
-
-                # Store name of dataframe combo for reference
-                combo_name = '-'.join(sorted([broker1, broker2, broker3]))
-
-                # Match strings in out dataframes
-                df1 = match_competitors(df1, df2, df3)
-
-                # Create a combined surebet dataframe
-                surebet_df = get_surebet_df(df1, df2, df3, market)
-
-                # Find surebets
-                surebet_df = find_surebets(surebet_df, market)
-
-                # Drop rows with NaN due to missing data
-                surebet_df.dropna(inplace=True)
-
-                # Save result
-                if not surebet_df.empty:
-                    surebets_dict[combo_name] = surebet_df
 
     if not surebets_dict:
         print(f'No surebets found for {market.title()}!')

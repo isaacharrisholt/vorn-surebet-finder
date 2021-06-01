@@ -32,10 +32,20 @@ def replace_comma(x):
     return x
 
 
-# Converts fractional odds to floats
+# Converts fractional odds to floats, bearing in mind float odds show full return, whereas fractional odds ignore
+# initial stake
 def convert_odds(x):
     if isinstance(x, str) and '/' in x:
-        x = str(float(x.split('/')[0]) / float(x.split('/')[1]))
+        numerator = float(x.split('/')[0])
+        denominator = float(x.split('/')[1])
+        x = float(numerator / denominator + 1)
+    return float(x)
+
+
+# Checks length of odds
+def check_length(x, num):
+    if len(x.split('\n')) != num:
+        x = ('1\n' * num).strip('\n')
     return x
 
 

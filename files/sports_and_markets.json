@@ -1,16 +1,36 @@
 {
   "Football": {
     "two-way": [
-      "btts", "over-under-1.5", "over-under-2.5", "over-under-3.5", "over-under-4.5"
+      "btts"
     ],
-    "three-way": [
-      "1x2", "halftime-1x2"
+    "three-way": [],
+    "win-bet-is-three-way": true,
+    "two-way-not-in-use": [
+      "over-under-1.5", "over-under-3.5", "over-under-4.5", "over-under-2.5"
     ],
-    "win-bet-is-three-way": true
+    "three-way-not-in-use": [
+      "halftime-1x2", "1x2"
+    ]
   },
   "Tennis": {
     "two-way": [],
     "three-way": [],
-    "win-bet-is-three-way": false
+    "win-bet-is-three-way": false,
+    "two-way-not-in-use": [],
+    "three-way-not-in-use": []
+  },
+  "Volleyball": {
+    "two-way": [],
+    "three-way": [],
+    "win-bet-is-three-way": false,
+    "two-way-not-in-use": [],
+    "three-way-not-in-use": []
+  },
+  "Table Tennis": {
+    "two-way": [],
+    "three-way": [],
+    "win-bet-is-three-way": false,
+    "two-way-not-in-use": [],
+    "three-way-not-in-use": []
   }
 }

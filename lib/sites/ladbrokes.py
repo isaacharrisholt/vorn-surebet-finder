@@ -19,7 +19,7 @@ def initialise_webdriver():
     # Initialise webdriver options
     options = Options()
     options.headless = True
-    options.add_argument('window-size=1920x1080')
+    options.add_argument('window-size=1920,1080')
     options.add_experimental_option('excludeSwitches', ['enable-logging'])
 
     # Path to chromedriver
@@ -118,7 +118,8 @@ def get_market_odds(driver, market, odds_dict):
     time.sleep(1)
 
     # Box containing events
-    section = driver.find_element_by_xpath('//*[contains(@data-crlat, "accordionsList")]')
+    section = WebDriverWait(driver, 5).until(ec.presence_of_element_located((By.XPATH, '//*[contains(@data-crlat, '
+                                                                                       '"accordionsList")]')))
     box = section.find_element_by_tag_name('div')
 
     # Get single row events
@@ -151,6 +152,9 @@ def get_all_odds(driver, markets):
         for market in markets:
             if not change_market(driver, market):
                 print(f'-- Ladbrokes: "{market}" market not available')
+                odds_dict[market] = {}
+                odds_dict[market]['Odds'] = []
+                odds_dict[market]['Competitors'] = []
                 continue
             get_market_odds(driver, market, odds_dict)
     elif not markets:
@@ -217,7 +221,7 @@ def get_data(queue, sport, markets=None):
     # Get all the odds
     try:
         odds_dict = get_all_odds(driver, markets)
-    except TimeoutError:
+    except TimeoutException:
         print(f'- Ladbrokes: Timed out, returning.')
         queue.put({})
         return

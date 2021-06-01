@@ -1,5 +1,6 @@
 import json
 import beepy
+from datetime import datetime
 
 from . import utils
 
@@ -92,7 +93,7 @@ def get_wait_time():
 
 
 # Presents surebets nicely to user
-def present_surebets(all_surebets):
+def present_surebets(all_surebets, sport):
     utils.clear()
 
     # List to store generated strings for all markets
@@ -146,8 +147,12 @@ def present_surebets(all_surebets):
     if not surebet_market_strings:
         return
 
+    # Get current time to print
+    now = datetime.now()
+    current_time = now.strftime('%H:%M')
+
     # Join all strings
-    final_string = 'SUREBETS FOUND!\n\n' + '\n\n'.join(surebet_market_strings) + \
+    final_string = f'SUREBETS FOUND!\n{sport} - {current_time}\n\n' + '\n\n'.join(surebet_market_strings) + \
                    '\n\nPress {YELLOW}Enter{RESET} to continue.'
 
     # Present to user

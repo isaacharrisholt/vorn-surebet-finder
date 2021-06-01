@@ -4,7 +4,7 @@ from sympy import symbols, solve, Eq
 
 from . import utils
 
-MIN_MATCHING_SCORE = 70
+MIN_MATCHING_SCORE = 75
 
 
 # Clean up the dataframes and just get the markets we want
@@ -42,18 +42,26 @@ def get_surebet_df(df1, df2, market):
 # Formula to find surebets in dataframes
 def find_surebets(surebet_df, market):
     # Separate odds into separate columns and clean
-    # x column
+    # x column split
     surebet_df[[f'{market}_x_1',
-                f'{market}_x_2']] = surebet_df[f'{market}_x'].apply(utils.replace_comma).str.split('\n', expand=True) \
-                                                             .iloc[:, 0:2].apply(pd.Series)
-    surebet_df[f'{market}_x_1'] = surebet_df[f'{market}_x_1'].apply(utils.convert_odds).astype(float)
-    surebet_df[f'{market}_x_2'] = surebet_df[f'{market}_x_2'].apply(utils.convert_odds).astype(float)
-    # y column
+                f'{market}_x_2']] = surebet_df[f'{market}_x'].apply(lambda x: utils.check_length(x, 2)).str \
+                                                             .split('\n', expand=True).apply(pd.Series)
+
+    # y column split
     surebet_df[[f'{market}_y_1',
-                f'{market}_y_2']] = surebet_df[f'{market}_y'].apply(utils.replace_comma).str.split('\n', expand=True) \
-                                                             .iloc[:, 0:2].apply(pd.Series)
-    surebet_df[f'{market}_y_1'] = surebet_df[f'{market}_y_1'].apply(utils.convert_odds).astype(float)
-    surebet_df[f'{market}_y_2'] = surebet_df[f'{market}_y_2'].apply(utils.convert_odds).astype(float)
+                f'{market}_y_2']] = surebet_df[f'{market}_y'].apply(lambda x: utils.check_length(x, 2)).str \
+                                                             .split('\n', expand=True).apply(pd.Series)
+
+    # Drop rows with None due to odds with only one value
+    # surebet_df = surebet_df.dropna()
+
+    # x column cleanup
+    surebet_df[f'{market}_x_1'] = surebet_df[f'{market}_x_1'].apply(utils.convert_odds)
+    surebet_df[f'{market}_x_2'] = surebet_df[f'{market}_x_2'].apply(utils.convert_odds)
+
+    # y column cleanup
+    surebet_df[f'{market}_y_1'] = surebet_df[f'{market}_y_1'].apply(utils.convert_odds)
+    surebet_df[f'{market}_y_2'] = surebet_df[f'{market}_y_2'].apply(utils.convert_odds)
 
     # Add reciprocals of odds pairs
     surebet_df[f'{market}_surebets_1'] = (1 / surebet_df[f'{market}_x_1']) + (1 / surebet_df[f'{market}_y_2'])
@@ -98,33 +106,38 @@ def get_surebets(odds_dfs, market):
         df1 = copied_dfs[broker1].copy()
 
         for broker2 in copied_dfs:
-            df2 = copied_dfs[broker2].copy()
+            try:
+                df2 = copied_dfs[broker2].copy()
 
-            # Store name of dataframe pair for reference
-            pair_name = '-'.join(sorted([broker1, broker2]))
+                # Store name of dataframe pair for reference
+                pair_name_sorted = '-'.join(sorted([broker1, broker2]))
+                pair_name = '-'.join([broker1, broker2])
 
-            # If we've already checked this dataframe pair, or both are the same dataframe, skip
-            if pair_name in checked_pairs or broker2 == broker1:
+                # If we've already checked this dataframe pair, or both are the same dataframe, skip
+                if pair_name_sorted in checked_pairs or broker2 == broker1:
+                    continue
+
+                # Make sure we don't check this pair again
+                checked_pairs.append(pair_name_sorted)
+
+                # Match strings in our dataframes
+                df1 = match_competitors(df1, df2)
+
+                # Create a combined surebet dataframe
+                surebet_df = get_surebet_df(df1, df2, market)
+
+                # Drop rows with NaN due to missing data
+                surebet_df = surebet_df.dropna()
+
+                # Find surebets
+                surebet_df = find_surebets(surebet_df, market)
+
+                # Save result
+                if not surebet_df.empty:
+                    surebets_dict[pair_name] = surebet_df
+            except ValueError:
+                # Value error when we have empty DF
                 continue
-
-            # Make sure we don't check this pair again
-            checked_pairs.append(pair_name)
-
-            # Match strings in our dataframes
-            df1 = match_competitors(df1, df2)
-
-            # Create a combined surebet dataframe
-            surebet_df = get_surebet_df(df1, df2, market)
-
-            # Find surebets
-            surebet_df = find_surebets(surebet_df, market)
-
-            # Drop rows with NaN due to missing data
-            surebet_df.dropna(inplace=True)
-
-            # Save result
-            if not surebet_df.empty:
-                surebets_dict[pair_name] = surebet_df
 
     if not surebets_dict:
         print(f'No surebets found for {market.title()}!')

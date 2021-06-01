@@ -1,11 +1,15 @@
 import time
 import platform
 import os
+
+from selenium.webdriver import ActionChains
+from selenium.webdriver.common.keys import Keys
+
 from .. import utils
 
 import pandas as pd
 from selenium import webdriver
-from selenium.common.exceptions import SessionNotCreatedException
+from selenium.common.exceptions import SessionNotCreatedException, StaleElementReferenceException, TimeoutException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
@@ -19,7 +23,7 @@ def initialise_webdriver():
     # Initialise webdriver options
     options = Options()
     options.headless = True
-    options.add_argument('window-size=1920x1080')
+    options.add_argument('window-size=1920,1080')
     options.add_experimental_option('excludeSwitches', ['enable-logging'])
 
     # Path to chromedriver
@@ -45,13 +49,31 @@ def initialise_webdriver():
 # Clicks the accept cookies popup
 def accept_cookies(driver):
     time.sleep(2)
-    accept = driver.find_element_by_xpath('//*[@id="onetrust-accept-btn-handler"]')
-    accept.click()
+    accept = WebDriverWait(driver, 5).until(ec.element_to_be_clickable((By.XPATH,
+                                                                        '//*[@id="onetrust-accept-btn-handler"]')))
+    driver.execute_script('arguments[0].click()', accept)
+
+
+# Changes odds to decimal
+def change_to_decimal_odds(driver):
+    dropdown = WebDriverWait(driver, 5).until(ec.element_to_be_clickable((By.XPATH, './/select[contains(@id,'
+                                                                                    '"select-odds-setting")]')))
+    driver.execute_script('arguments[0].click()', dropdown)
+
+    # Select relevant option
+    option = dropdown.find_element_by_xpath('./option[@value="decimal"]')
+    option.click()
+    time.sleep(1)
 
 
 # Selects the desired sport from the row
 def select_sport(driver, sport):
-    sport_selector = driver.find_element_by_class_name('ip-sports-selector')
+    sport_selector = WebDriverWait(driver, 5).until(ec.visibility_of_element_located((By.CLASS_NAME,
+                                                                                      'ip-sports-selector')))
+
+    # Move to selector
+    action = ActionChains(driver)
+    action.send_keys(Keys.HOME).perform()
 
     # Find right arrow for if sport isn't visible
     right_arrow = sport_selector.find_element_by_class_name('arrow-right')
@@ -65,16 +87,17 @@ def select_sport(driver, sport):
             if text_field.text == sport:
                 button.click()
                 return True
+
         try:
             # Clicks arrow if sport wasn't visible
             right_arrow.click()
-        except Exception:
+        except:
             pass
 
         # If the right arrow has been disabled, and has been tried multiple times, return False
         if 'disabled' in right_arrow.get_attribute('class'):
             tries += 1
-            if tries == 2:
+            if tries == 5:
                 return False
 
 
@@ -101,15 +124,28 @@ def get_market_odds(driver, market, odds_dict):
     box = driver.find_element_by_xpath('//div[contains(@class, "sport-container") and contains(@class, "visible")]')
 
     # Get single row events
-    rows = WebDriverWait(box, 10).until(ec.visibility_of_all_elements_located((By.CLASS_NAME, 'com-coupon-line')))
+    while True:
+        try:
+            rows = WebDriverWait(box, 5).until(ec.visibility_of_all_elements_located((By.CLASS_NAME,
+                                                                                      'com-coupon-line')))
+            break
+        except TimeoutException:
+            odds_dict[market] = {}
+            odds_dict[market]['Odds'] = odds_list
+            odds_dict[market]['Competitors'] = competitors
+            print(f'-- Betfair: Timed out getting odds for {market}')
+            return odds_dict
 
     # Iterate through rows and find odds and competitor names
     for row in rows:
-        odds = row.find_element_by_xpath('.//div[contains(@class, "runner-list")]')
-        odds_list.append(odds.text)
-        home = row.find_element_by_class_name('home-team-name').text
-        away = row.find_element_by_class_name('away-team-name').text
-        competitors.append(home + ' - ' + away)
+        try:
+            odds = row.find_element_by_xpath('.//div[contains(@class, "runner-list")]')
+            odds_list.append(odds.text)
+            home = row.find_element_by_class_name('home-team-name').text
+            away = row.find_element_by_class_name('away-team-name').text
+            competitors.append(home + ' - ' + away)
+        except StaleElementReferenceException:
+            continue
 
     # Store data in odds dictionary and return
     odds_dict[market] = {}
@@ -129,6 +165,9 @@ def get_all_odds(driver, markets):
         for market in markets:
             if not change_market(driver, market):
                 print(f'-- Betfair: "{market}" market not available')
+                odds_dict[market] = {}
+                odds_dict[market]['Odds'] = []
+                odds_dict[market]['Competitors'] = []
                 continue
             odds_dict = get_market_odds(driver, market, odds_dict)
     elif not markets:
@@ -178,6 +217,7 @@ def get_data(queue, sport, markets=None):
     # Open page and accept cookies
     driver.get(SITE_LINK)
     accept_cookies(driver)
+    change_to_decimal_odds(driver)
 
     # Select relevant sport from list and return availability
     sport_available = select_sport(driver, sport)
@@ -191,7 +231,7 @@ def get_data(queue, sport, markets=None):
     # Get all the odds
     try:
         odds_dict = get_all_odds(driver, markets)
-    except TimeoutError:
+    except TimeoutException:
         print(f'- Betfair: Timed out, returning.')
         queue.put({})
         return

@@ -96,7 +96,7 @@ def main(sport, markets, three_way_markets, total_stake, rounding_base):
     # Apply calculations to surebets found, if any, then present to user
     if surebets_found:
         all_surebets = calculations.do_surebet_calculations(all_surebets, three_way_markets, total_stake, rounding_base)
-        ui.present_surebets(all_surebets)
+        ui.present_surebets(all_surebets, sport)
 
 
 if __name__ == '__main__':
